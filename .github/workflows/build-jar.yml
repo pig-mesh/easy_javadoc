@@ -40,11 +40,30 @@ jobs:
       with:
         name: jar-files-${{ github.run_number }}
         path: build/libs/*.jar
-        retention-days: 30
+        retention-days: 90
 
     - name: Upload Plugin ZIP
       uses: actions/upload-artifact@v4
       with:
         name: plugin-zip-${{ github.run_number }}
         path: build/distributions/*.zip
-        retention-days: 30 
+        retention-days: 90
+        
+    - name: Create Release (for main/master branch)
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: build-${{ github.run_number }}-${{ github.sha }}
+        name: Auto Build ${{ github.run_number }}
+        body: |
+          自动构建 - 运行号: ${{ github.run_number }}
+          提交: ${{ github.sha }}
+          分支: ${{ github.ref_name }}
+          构建时间: ${{ github.event.head_commit.timestamp }}
+        files: |
+          build/distributions/*.zip
+          build/libs/*.jar
+        draft: false
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

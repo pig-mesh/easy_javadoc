@@ -33,7 +33,9 @@ import com.star.easydoc.config.EasyDocConfigComponent;
 import com.star.easydoc.service.translator.TranslatorService;
 import com.star.easydoc.view.inner.SupportView;
 import com.star.easydoc.view.inner.WordMapAddView;
+import com.star.easydoc.common.util.HttpUtil;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author wangchao
@@ -99,6 +101,7 @@ public class CommonSettingsView {
     private JTextField openaiTemperatureTextField;
     private JLabel openaiTopKLabel;
     private JTextField openaiTopKTextField;
+    private JButton openaiTestButton;
     private JBList<Entry<String, String>> typeMapList;
     private JBList<String> projectList;
     private JBList<Entry<String, String>> projectTypeMapList;
@@ -217,6 +220,8 @@ public class CommonSettingsView {
             }
         });
 
+        openaiTestButton.addActionListener(event -> testOpenAiConnection());
+
         projectList.addListSelectionListener(e -> refreshProjectWordMap());
     }
 
@@ -260,6 +265,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         } else if (Consts.TENCENT_TRANSLATOR.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -299,6 +305,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         } else if (Consts.ALIYUN_TRANSLATOR.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -338,6 +345,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         } else if (Consts.YOUDAO_AI_TRANSLATOR.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -377,6 +385,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         } else if (Consts.MICROSOFT_TRANSLATOR.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -416,6 +425,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         } else if (Consts.GOOGLE_TRANSLATOR.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -455,6 +465,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         } else if (Consts.CHATGLM_GPT.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -492,6 +503,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         } else if (Consts.OPENAI_GPT.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -529,6 +541,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(true);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(true);
         } else if (Consts.CUSTOM_URL.equals(selectedItem)) {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -566,6 +579,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(true);
             customUrlHelpButton.setVisible(true);
+            openaiTestButton.setVisible(false);
         } else {
             appIdLabel.setVisible(false);
             tokenLabel.setVisible(false);
@@ -605,6 +619,7 @@ public class CommonSettingsView {
             openaiTopKTextField.setVisible(false);
             customUrlTextField.setVisible(false);
             customUrlHelpButton.setVisible(false);
+            openaiTestButton.setVisible(false);
         }
     }
 
@@ -916,5 +931,156 @@ public class CommonSettingsView {
 
     public void setOpenaiTopKTextField(String openaiTopK) {
         this.openaiTopKTextField.setText(openaiTopK);
+    }
+
+    private void testOpenAiConnection() {
+        try {
+            // 获取当前配置
+            String baseUrl = openaiBaseUrlTextField.getText().trim();
+            String apiKey = openaiApiKeyTextField.getText().trim();
+            String model = openaiModelTextField.getText().trim();
+            String temperatureText = openaiTemperatureTextField.getText().trim();
+            String topKText = openaiTopKTextField.getText().trim();
+            
+            // 验证必填字段
+            if (StringUtils.isBlank(baseUrl)) {
+                showTestResult("❌ 测试失败", "Base URL不能为空", false);
+                return;
+            }
+            if (StringUtils.isBlank(apiKey)) {
+                showTestResult("❌ 测试失败", "API Key不能为空", false);
+                return;
+            }
+            if (StringUtils.isBlank(model)) {
+                model = "gpt-3.5-turbo";
+            }
+            
+            // 确保URL格式正确
+            if (!baseUrl.endsWith("/")) {
+                baseUrl += "/";
+            }
+            String url = baseUrl + "v1/chat/completions";
+            
+            // 构建请求头
+            Map<String, String> headers = Maps.newHashMap();
+            headers.put("Authorization", "Bearer " + apiKey);
+            headers.put("Content-Type", "application/json");
+            
+            // 构建请求体
+            Map<String, Object> message = Maps.newHashMap();
+            message.put("role", "user");
+            message.put("content", "test");
+            
+            Map<String, Object> request = Maps.newHashMap();
+            request.put("model", model);
+            request.put("messages", Lists.newArrayList(message));
+            request.put("stream", false);
+            request.put("max_tokens", 10);  // 限制token数量以节省费用
+            
+            // 设置温度参数
+            if (StringUtils.isNotBlank(temperatureText)) {
+                try {
+                    double temperature = Double.parseDouble(temperatureText);
+                    if (temperature >= 0.0 && temperature <= 2.0) {
+                        request.put("temperature", temperature);
+                    }
+                } catch (NumberFormatException e) {
+                    // 忽略无效的温度值
+                }
+            }
+            
+            // 设置top_p参数（从TopK转换）
+            if (StringUtils.isNotBlank(topKText)) {
+                try {
+                    int topK = Integer.parseInt(topKText);
+                    if (topK > 0 && topK <= 100) {
+                        double topP = Math.min(1.0, Math.max(0.0, topK / 100.0));
+                        if (topP > 0.0) {
+                            request.put("top_p", topP);
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // 忽略无效的TopK值
+                }
+            }
+            
+            String requestJson = JSON.toJSONString(request);
+            
+            // 发送请求
+            String response = HttpUtil.postJson(url, headers, requestJson, 10000);
+            
+            if (StringUtils.isBlank(response)) {
+                showTestResult("❌ 测试失败", "API响应为空", false);
+                return;
+            }
+            
+            // 解析响应
+            com.alibaba.fastjson2.JSONObject jsonResponse = JSON.parseObject(response);
+            if (jsonResponse == null) {
+                showTestResult("❌ 测试失败", "无法解析API响应: " + response, false);
+                return;
+            }
+            
+            // 检查是否有错误
+            if (jsonResponse.containsKey("error")) {
+                com.alibaba.fastjson2.JSONObject error = jsonResponse.getJSONObject("error");
+                String errorMessage = error.getString("message");
+                String errorType = error.getString("type");
+                String errorCode = error.getString("code");
+                
+                String fullError = "API错误: " + errorType;
+                if (StringUtils.isNotBlank(errorCode)) {
+                    fullError += " (代码: " + errorCode + ")";
+                }
+                fullError += "\n" + errorMessage;
+                
+                showTestResult("❌ 测试失败", fullError, false);
+                return;
+            }
+            
+            // 检查成功响应
+            if (jsonResponse.containsKey("choices")) {
+                showTestResult("✅ 测试成功", "OpenAI API连接正常!\n\n完整响应:\n" + JSON.toJSONString(jsonResponse, com.alibaba.fastjson2.JSONWriter.Feature.PrettyFormat), true);
+            } else {
+                showTestResult("⚠️ 测试异常", "API响应格式异常:\n" + JSON.toJSONString(jsonResponse, com.alibaba.fastjson2.JSONWriter.Feature.PrettyFormat), false);
+            }
+            
+        } catch (Exception e) {
+            String errorMessage = "连接失败: " + e.getMessage();
+            if (e.getMessage().contains("UnknownHostException")) {
+                errorMessage = "网络连接失败，请检查Base URL是否正确";
+            } else if (e.getMessage().contains("ConnectTimeoutException")) {
+                errorMessage = "连接超时，请检查网络连接和Base URL";
+            } else if (e.getMessage().contains("401")) {
+                errorMessage = "API Key无效，请检查API Key是否正确";
+            } else if (e.getMessage().contains("403")) {
+                errorMessage = "API访问被拒绝，请检查API Key权限";
+            } else if (e.getMessage().contains("404")) {
+                errorMessage = "API端点不存在，请检查Base URL是否正确";
+            }
+            showTestResult("❌ 测试失败", errorMessage, false);
+        }
+    }
+    
+    private void showTestResult(String title, String message, boolean isSuccess) {
+        // 根据成功或失败显示不同的图标和样式
+        int messageType = isSuccess ? javax.swing.JOptionPane.INFORMATION_MESSAGE : javax.swing.JOptionPane.ERROR_MESSAGE;
+        
+        // 创建一个可滚动的文本区域来显示长消息
+        javax.swing.JTextArea textArea = new javax.swing.JTextArea(15, 50);
+        textArea.setText(message);
+        textArea.setEditable(false);
+        textArea.setFont(new java.awt.Font(java.awt.Font.MONOSPACED, java.awt.Font.PLAIN, 12));
+        
+        javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+        scrollPane.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        
+        javax.swing.JOptionPane.showMessageDialog(
+            this.panel,
+            scrollPane,
+            title,
+            messageType
+        );
     }
 }
