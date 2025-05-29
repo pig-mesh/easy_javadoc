@@ -1,0 +1,57 @@
+name: Build JAR
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-jar:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 8
+      uses: actions/setup-java@v4
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        
+    - name: Setup Gradle 5.x
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-version: '5.6.4'
+        
+    - name: Build JAR
+      run: gradle jar
+      
+    - name: Build Fat JAR
+      run: gradle fatJar
+      
+    - name: Build Plugin
+      run: gradle buildPlugin
+      
+    - name: Show build results
+      run: |
+        echo "=== Build completed ==="
+        echo "JAR files:"
+        find build/libs -name "*.jar" -type f | head -10
+        echo "Plugin distributions:"
+        find build/distributions -name "*.zip" -type f | head -5
+        
+    - name: Upload JAR files
+      uses: actions/upload-artifact@v3
+      with:
+        name: jar-files-${{ github.run_number }}
+        path: build/libs/*.jar
+        retention-days: 30
+        
+    - name: Upload Plugin ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: plugin-zip-${{ github.run_number }}
+        path: build/distributions/*.zip
+        retention-days: 30 
