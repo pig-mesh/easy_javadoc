@@ -14,26 +14,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up JDK 8
+    - name: Set up JDK 11
       uses: actions/setup-java@v4
       with:
-        java-version: '8'
+        java-version: '11'
         distribution: 'temurin'
-        
+
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2.12.0
       with:
-        gradle-version: '5.6.4'
-        
-    - name: Build JAR
-      run: gradle jar
-      
-    - name: Build Fat JAR
-      run: gradle fatJar
-      
+        gradle-version: '8.5'
+
     - name: Build Plugin
       run: gradle buildPlugin
-      
     - name: Show build results
       run: |
         echo "=== Build completed ==="
@@ -48,7 +41,7 @@ jobs:
         name: jar-files-${{ github.run_number }}
         path: build/libs/*.jar
         retention-days: 30
-        
+
     - name: Upload Plugin ZIP
       uses: actions/upload-artifact@v4
       with:
