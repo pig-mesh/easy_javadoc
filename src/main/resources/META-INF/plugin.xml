@@ -77,6 +77,5 @@
         </action>
     </actions>
 
-    <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.kotlin</depends>
 </idea-plugin>
