@@ -78,7 +78,7 @@ public class ChatGlmGptSupplier extends AbstractGptSupplier {
     private static class ChatGlmRequest {
 
         /** 所要调用的模型编码 */
-        private String model = "glm-4";
+        private String model = "glm-4-flash";
         /** 当前对话信息列表 */
         private List<Message> messages;
         /** 是否开启流式模式 */
