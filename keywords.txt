@@ -1,0 +1,4 @@
+dataset=知识库
+embedding=向量
+status=状态
+usage=用量
