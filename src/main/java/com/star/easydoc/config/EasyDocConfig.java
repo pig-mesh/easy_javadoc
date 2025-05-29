@@ -167,6 +167,31 @@ public class EasyDocConfig {
     /** 批量生成是否递归内部类 */
     private Boolean genAllInnerClass;
 
+    /**
+     * OpenAI API Base URL
+     */
+    private String openaiBaseUrl = "https://api.openai.com";
+    
+    /**
+     * OpenAI API Key
+     */
+    private String openaiApiKey;
+    
+    /**
+     * OpenAI Model Name
+     */
+    private String openaiModel = "gpt-3.5-turbo";
+    
+    /**
+     * OpenAI Temperature (0.0-2.0)
+     */
+    private Double openaiTemperature = 0.7;
+    
+    /**
+     * OpenAI TopK
+     */
+    private Integer openaiTopK = 40;
+
     public void reset() {
         author = "admin";
         kdocAuthor = "admin";
@@ -187,6 +212,12 @@ public class EasyDocConfig {
         accessKeySecret = null;
         youdaoAppKey = null;
         youdaoAppSecret = null;
+        chatGlmApiKey = null;
+        openaiBaseUrl = "https://api.openai.com";
+        openaiApiKey = null;
+        openaiModel = "gpt-3.5-turbo";
+        openaiTemperature = 0.7;
+        openaiTopK = 40;
         wordMap = new TreeMap<>();
         projectWordMap = new TreeMap<>();
         classTemplateConfig = new TemplateConfig();
@@ -675,5 +706,45 @@ public class EasyDocConfig {
 
     public void setCustomUrl(String customUrl) {
         this.customUrl = customUrl;
+    }
+
+    public String getOpenaiBaseUrl() {
+        return openaiBaseUrl;
+    }
+
+    public void setOpenaiBaseUrl(String openaiBaseUrl) {
+        this.openaiBaseUrl = openaiBaseUrl;
+    }
+
+    public String getOpenaiApiKey() {
+        return openaiApiKey;
+    }
+
+    public void setOpenaiApiKey(String openaiApiKey) {
+        this.openaiApiKey = openaiApiKey;
+    }
+
+    public String getOpenaiModel() {
+        return openaiModel;
+    }
+
+    public void setOpenaiModel(String openaiModel) {
+        this.openaiModel = openaiModel;
+    }
+
+    public Double getOpenaiTemperature() {
+        return openaiTemperature;
+    }
+
+    public void setOpenaiTemperature(Double openaiTemperature) {
+        this.openaiTemperature = openaiTemperature;
+    }
+
+    public Integer getOpenaiTopK() {
+        return openaiTopK;
+    }
+
+    public void setOpenaiTopK(Integer openaiTopK) {
+        this.openaiTopK = openaiTopK;
     }
 }

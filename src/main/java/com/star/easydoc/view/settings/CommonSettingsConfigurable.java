@@ -86,6 +86,21 @@ public class CommonSettingsConfigurable implements Configurable {
         if (!Objects.equals(config.getChatGlmApiKey(), view.getChatGlmApiKeyTextField().getText())) {
             return true;
         }
+        if (!Objects.equals(config.getOpenaiBaseUrl(), view.getOpenaiBaseUrlTextField().getText())) {
+            return true;
+        }
+        if (!Objects.equals(config.getOpenaiApiKey(), view.getOpenaiApiKeyTextField().getText())) {
+            return true;
+        }
+        if (!Objects.equals(config.getOpenaiModel(), view.getOpenaiModelTextField().getText())) {
+            return true;
+        }
+        if (!Objects.equals(config.getOpenaiTemperature() != null ? config.getOpenaiTemperature().toString() : "", view.getOpenaiTemperatureTextField().getText())) {
+            return true;
+        }
+        if (!Objects.equals(config.getOpenaiTopK() != null ? config.getOpenaiTopK().toString() : "", view.getOpenaiTopKTextField().getText())) {
+            return true;
+        }
         if (!Objects.equals(config.getCustomUrl(), view.getCustomUrlTextField().getText())) {
             return true;
         }
@@ -107,6 +122,11 @@ public class CommonSettingsConfigurable implements Configurable {
         config.setMicrosoftRegion(view.getMicrosoftRegionTextField().getText());
         config.setGoogleKey(view.getGoogleKeyTextField().getText());
         config.setChatGlmApiKey(view.getChatGlmApiKeyTextField().getText());
+        config.setOpenaiBaseUrl(view.getOpenaiBaseUrlTextField().getText());
+        config.setOpenaiApiKey(view.getOpenaiApiKeyTextField().getText());
+        config.setOpenaiModel(view.getOpenaiModelTextField().getText());
+        config.setOpenaiTemperature(view.getOpenaiTemperatureTextField().getText() != null ? Double.parseDouble(view.getOpenaiTemperatureTextField().getText()) : null);
+        config.setOpenaiTopK(view.getOpenaiTopKTextField().getText() != null ? Integer.parseInt(view.getOpenaiTopKTextField().getText()) : null);
         config.setCustomUrl(StringUtils.strip(view.getCustomUrlTextField().getText()));
         if (config.getWordMap() == null) {
             config.setWordMap(new TreeMap<>());
@@ -163,6 +183,37 @@ public class CommonSettingsConfigurable implements Configurable {
         if (Consts.CHATGLM_GPT.equals(config.getTranslator())) {
             if (StringUtils.isBlank(config.getChatGlmApiKey())) {
                 throw new ConfigurationException("apiKey不能为空");
+            }
+        }
+        if (Consts.OPENAI_GPT.equals(config.getTranslator())) {
+            if (StringUtils.isBlank(config.getOpenaiApiKey())) {
+                throw new ConfigurationException("OpenAI API Key不能为空");
+            }
+            if (StringUtils.isBlank(config.getOpenaiBaseUrl())) {
+                throw new ConfigurationException("OpenAI Base URL不能为空");
+            }
+            if (StringUtils.isBlank(config.getOpenaiModel())) {
+                throw new ConfigurationException("OpenAI Model不能为空");
+            }
+            try {
+                if (StringUtils.isNotBlank(view.getOpenaiTemperatureTextField().getText())) {
+                    double temperature = Double.parseDouble(view.getOpenaiTemperatureTextField().getText());
+                    if (temperature < 0.0 || temperature > 2.0) {
+                        throw new ConfigurationException("OpenAI Temperature参数必须在0.0-2.0之间");
+                    }
+                }
+            } catch (NumberFormatException e) {
+                throw new ConfigurationException("OpenAI Temperature参数必须是有效的数字");
+            }
+            try {
+                if (StringUtils.isNotBlank(view.getOpenaiTopKTextField().getText())) {
+                    int topK = Integer.parseInt(view.getOpenaiTopKTextField().getText());
+                    if (topK < 1 || topK > 100) {
+                        throw new ConfigurationException("OpenAI TopK参数必须在1-100之间");
+                    }
+                }
+            } catch (NumberFormatException e) {
+                throw new ConfigurationException("OpenAI TopK参数必须是有效的整数");
             }
         }
         if (Consts.CUSTOM_URL.equals(config.getTranslator())) {
