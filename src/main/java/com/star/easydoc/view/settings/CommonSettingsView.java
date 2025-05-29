@@ -36,6 +36,7 @@ import com.star.easydoc.view.inner.WordMapAddView;
 import com.star.easydoc.common.util.HttpUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import com.star.easydoc.service.RemoteWordMapService;
 
 /**
  * @author wangchao
@@ -105,6 +106,12 @@ public class CommonSettingsView {
     private JBList<Entry<String, String>> typeMapList;
     private JBList<String> projectList;
     private JBList<Entry<String, String>> projectTypeMapList;
+
+    // 远程单词映射URL相关的UI组件
+    private JLabel remoteWordMapUrlLabel;
+    private JTextField remoteWordMapUrlTextField;
+    private JButton remoteWordMapTestButton;
+    private JButton remoteWordMapImportButton;
 
     private static final String CUSTOM_HELP_URL
         = "https://github.com/starcwang/easy_javadoc/blob/master/doc/%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8E%A5%E5%8F%A3%E8%AF%B4%E6%98%8E.md";
@@ -223,6 +230,10 @@ public class CommonSettingsView {
         openaiTestButton.addActionListener(event -> testOpenAiConnection());
 
         projectList.addListSelectionListener(e -> refreshProjectWordMap());
+
+        // 远程单词映射URL相关的事件监听器
+        remoteWordMapTestButton.addActionListener(event -> testRemoteWordMapUrl());
+        remoteWordMapImportButton.addActionListener(event -> importRemoteWordMap());
     }
 
     private void setVisible(Object selectedItem) {
@@ -659,6 +670,29 @@ public class CommonSettingsView {
         });
         wordMapPanel = toolbarDecorator.createPanel();
 
+        // 创建远程单词映射URL相关的UI组件
+        remoteWordMapUrlLabel = new JLabel("远程词库:");
+        remoteWordMapUrlTextField = new JTextField();
+        remoteWordMapTestButton = new JButton("测试连接");
+        remoteWordMapImportButton = new JButton("导入映射");
+
+        // 将远程URL组件添加到wordMapPanel
+        JPanel remoteUrlPanel = new JPanel(new BorderLayout());
+        JPanel urlInputPanel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        
+        urlInputPanel.add(remoteWordMapUrlLabel, BorderLayout.WEST);
+        urlInputPanel.add(remoteWordMapUrlTextField, BorderLayout.CENTER);
+        buttonPanel.add(remoteWordMapTestButton);
+        buttonPanel.add(remoteWordMapImportButton);
+        urlInputPanel.add(buttonPanel, BorderLayout.EAST);
+        
+        remoteUrlPanel.add(urlInputPanel, BorderLayout.NORTH);
+        remoteUrlPanel.add(wordMapPanel, BorderLayout.CENTER);
+        
+        // 用包含远程URL组件的面板替换原来的wordMapPanel
+        wordMapPanel = remoteUrlPanel;
+
         projectTypeMapList = new JBList<>(new CollectionListModel<>(Lists.newArrayList()));
         projectTypeMapList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         projectTypeMapList.setCellRenderer(new ListCellRendererWrapper<Entry<String, String>>() {
@@ -731,6 +765,7 @@ public class CommonSettingsView {
         setOpenaiTemperatureTextField(config.getOpenaiTemperature() != null ? config.getOpenaiTemperature().toString() : "");
         setOpenaiTopKTextField(config.getOpenaiTopK() != null ? config.getOpenaiTopK().toString() : "");
         setCustomUrlTextField(config.getCustomUrl());
+        setRemoteWordMapUrlTextField(config.getRemoteWordMapUrl());
         refreshWordMap();
         projectList.clearSelection();
         refreshProjectWordMap();
@@ -931,6 +966,81 @@ public class CommonSettingsView {
 
     public void setOpenaiTopKTextField(String openaiTopK) {
         this.openaiTopKTextField.setText(openaiTopK);
+    }
+
+    public JTextField getRemoteWordMapUrlTextField() {
+        return remoteWordMapUrlTextField;
+    }
+
+    public void setRemoteWordMapUrlTextField(String remoteWordMapUrl) {
+        this.remoteWordMapUrlTextField.setText(remoteWordMapUrl);
+    }
+
+    /**
+     * 测试远程单词映射URL是否可访问
+     */
+    private void testRemoteWordMapUrl() {
+        String url = remoteWordMapUrlTextField.getText();
+        if (url == null || url.trim().isEmpty()) {
+            showTestResult("远程URL测试", "请先输入远程单词映射URL", false);
+            return;
+        }
+
+        try {
+            boolean isValid = RemoteWordMapService.validateRemoteUrl(url);
+            if (isValid) {
+                showTestResult("远程URL测试", "远程URL连接成功！", true);
+            } else {
+                showTestResult("远程URL测试", "远程URL连接失败，请检查URL是否正确", false);
+            }
+        } catch (Exception e) {
+            showTestResult("远程URL测试", "测试失败：" + e.getMessage(), false);
+        }
+    }
+
+    /**
+     * 从远程URL导入单词映射
+     */
+    private void importRemoteWordMap() {
+        String url = remoteWordMapUrlTextField.getText();
+        if (url == null || url.trim().isEmpty()) {
+            showTestResult("远程导入", "请先输入远程单词映射URL", false);
+            return;
+        }
+
+        try {
+            Map<String, String> remoteWordMap = RemoteWordMapService.fetchRemoteWordMap(url);
+            if (remoteWordMap.isEmpty()) {
+                showTestResult("远程导入", "未获取到任何单词映射", false);
+                return;
+            }
+
+            // 将远程映射合并到本地全局映射中
+            SortedMap<String, String> localWordMap = config.getWordMap();
+            if (localWordMap == null) {
+                localWordMap = Maps.newTreeMap();
+            }
+
+            int overwriteCount = 0;
+            for (Map.Entry<String, String> entry : remoteWordMap.entrySet()) {
+                if (localWordMap.containsKey(entry.getKey())) {
+                    overwriteCount++;
+                }
+                localWordMap.put(entry.getKey(), entry.getValue());
+            }
+
+            config.setWordMap(localWordMap);
+            refreshWordMap();
+
+            String message = String.format("成功导入 %d 个单词映射", remoteWordMap.size());
+            if (overwriteCount > 0) {
+                message += String.format("，覆盖了 %d 个已存在的映射", overwriteCount);
+            }
+            showTestResult("远程导入", message, true);
+
+        } catch (Exception e) {
+            showTestResult("远程导入", "导入失败：" + e.getMessage(), false);
+        }
     }
 
     private void testOpenAiConnection() {

@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.star.easydoc.common.Consts;
+import com.star.easydoc.service.RemoteWordMapService;
 
 /**
  * 持久化配置文件
@@ -141,6 +142,9 @@ public class EasyDocConfig {
 
     /** 项目级别单词映射 */
     private SortedMap<String, TreeMap<String, String>> projectWordMap = new TreeMap<>();
+
+    /** 远程单词映射URL */
+    private String remoteWordMapUrl = "https://raw.githubusercontent.com/pig-mesh/easy_javadoc/refs/heads/master/keywords.txt";
 
     /**
      * 类模板配置
@@ -464,9 +468,13 @@ public class EasyDocConfig {
     @JSONField(serialize = false, deserialize = false)
     public Map<String, String> getWordMapWithProject() {
         Map<String, String> map = Maps.newHashMap();
+        
+        // 先添加本地全局单词映射
         if (wordMap != null) {
             map.putAll(wordMap);
         }
+        
+        // 添加项目级别单词映射
         Project project = DataManager.getInstance()
             .getDataContextFromFocus()
             .getResultSync()
@@ -477,6 +485,15 @@ public class EasyDocConfig {
                 map.putAll(projectMap);
             }
         }
+        
+        // 最后添加远程单词映射（会覆盖本地和项目映射）
+        if (remoteWordMapUrl != null && !remoteWordMapUrl.trim().isEmpty()) {
+            Map<String, String> remoteWordMap = RemoteWordMapService.fetchRemoteWordMap(remoteWordMapUrl);
+            if (!remoteWordMap.isEmpty()) {
+                map.putAll(remoteWordMap);
+            }
+        }
+        
         return map;
     }
 
@@ -746,5 +763,13 @@ public class EasyDocConfig {
 
     public void setOpenaiTopK(Integer openaiTopK) {
         this.openaiTopK = openaiTopK;
+    }
+
+    public String getRemoteWordMapUrl() {
+        return remoteWordMapUrl;
+    }
+
+    public void setRemoteWordMapUrl(String remoteWordMapUrl) {
+        this.remoteWordMapUrl = remoteWordMapUrl;
     }
 }

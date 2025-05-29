@@ -104,6 +104,9 @@ public class CommonSettingsConfigurable implements Configurable {
         if (!Objects.equals(config.getCustomUrl(), view.getCustomUrlTextField().getText())) {
             return true;
         }
+        if (!Objects.equals(config.getRemoteWordMapUrl(), view.getRemoteWordMapUrlTextField().getText())) {
+            return true;
+        }
         return false;
     }
 
@@ -128,6 +131,7 @@ public class CommonSettingsConfigurable implements Configurable {
         config.setOpenaiTemperature(view.getOpenaiTemperatureTextField().getText() != null ? Double.parseDouble(view.getOpenaiTemperatureTextField().getText()) : null);
         config.setOpenaiTopK(view.getOpenaiTopKTextField().getText() != null ? Integer.parseInt(view.getOpenaiTopKTextField().getText()) : null);
         config.setCustomUrl(StringUtils.strip(view.getCustomUrlTextField().getText()));
+        config.setRemoteWordMapUrl(view.getRemoteWordMapUrlTextField().getText());
         if (config.getWordMap() == null) {
             config.setWordMap(new TreeMap<>());
         }
